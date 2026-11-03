@@ -1,0 +1,565 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Header */
+.app-header {
+  background-color: var(--chubb-blue);
+  color: #ffffff;
+  padding: 0.85rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.chubb-logo {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: #ffffff;
+  border-right: 2px solid rgba(255,255,255,0.25);
+  padding-right: 1.25rem;
+}
+
+.platform-title {
+  display: flex;
+  flex-direction: column;
+}
+
+.platform-title .region {
+  font-size: 0.7rem;
+  letter-spacing: 0.15em;
+  color: var(--chubb-accent);
+  font-weight: 700;
+}
+
+.platform-title .app-name {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+/* Role Switcher Pill */
+.role-switcher {
+  display: flex;
+  align-items: center;
+  background-color: rgba(255,255,255,0.1);
+  padding: 0.35rem 0.6rem;
+  border-radius: 9999px;
+  gap: 0.5rem;
+}
+
+.switcher-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #94a3b8;
+  margin-right: 0.25rem;
+}
+
+.btn-role {
+  background: transparent;
+  border: none;
+  color: #e2e8f0;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.btn-role.active {
+  background-color: #ffffff;
+  color: var(--chubb-blue);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Sub-header Banner */
+.user-context-banner {
+  background-color: #ffffff;
+  border-bottom: 1px solid var(--chubb-border);
+  padding: 0.65rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.context-user {
+  font-size: 0.85rem;
+  color: var(--chubb-text-muted);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--chubb-success);
+}
+
+.context-tabs {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.context-tabs button {
+  background: transparent;
+  border: 1px solid var(--chubb-border);
+  padding: 0.45rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--chubb-text-main);
+}
+
+.context-tabs button.tab-active {
+  background-color: var(--chubb-blue);
+  color: #ffffff;
+  border-color: var(--chubb-blue);
+}
+
+/* Feedback Banner */
+.feedback-banner {
+  background-color: #ecfdf5;
+  color: #065f46;
+  border-left: 4px solid #10b981;
+  padding: 0.75rem 2rem;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 1.25rem;
+  color: #065f46;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.card {
+  background-color: #ffffff;
+  border: 1px solid var(--chubb-border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.kpi-card {
+  background: #ffffff;
+  border: 1px solid var(--chubb-border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-card.highlight {
+  border-left: 5px solid var(--chubb-accent);
+  background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+}
+
+.kpi-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--chubb-text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--chubb-blue);
+  margin-bottom: 0.25rem;
+}
+
+.kpi-sub {
+  font-size: 0.75rem;
+  color: var(--chubb-text-muted);
+}
+
+/* Market Liability Grid */
+.market-liability-card {
+  background: #ffffff;
+  border: 1px solid var(--chubb-border);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.market-liability-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 1.25rem;
+  color: var(--chubb-blue);
+}
+
+.market-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.market-box {
+  background: var(--chubb-light-bg);
+  border: 1px solid var(--chubb-border);
+  border-radius: 6px;
+  padding: 1rem;
+}
+
+.market-header {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--chubb-text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.market-amount {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--chubb-blue);
+}
+
+.market-count {
+  font-size: 0.75rem;
+  color: var(--chubb-text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Forms */
+.form-card {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  color: var(--chubb-text-main);
+}
+
+input, select, textarea {
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--chubb-border);
+  border-radius: 6px;
+  background-color: #ffffff;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--chubb-accent);
+  box-shadow: 0 0 0 3px rgba(0, 132, 204, 0.15);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--chubb-blue);
+  color: #ffffff;
+  border: none;
+  padding: 0.65rem 1.25rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.btn-primary:hover {
+  background-color: #001f35;
+}
+
+.btn-secondary {
+  background: #ffffff;
+  border: 1px solid var(--chubb-border);
+  padding: 0.65rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.btn-warning {
+  background-color: #f59e0b;
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.btn-success {
+  background-color: #10b981;
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.btn-danger {
+  background-color: #ef4444;
+  color: #ffffff;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+
+.btn-inspect {
+  background: #ffffff;
+  border: 1px solid var(--chubb-accent);
+  color: var(--chubb-accent);
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.btn-inspect:hover {
+  background-color: var(--chubb-accent);
+  color: #ffffff;
+}
+
+.btn-back {
+  background: transparent;
+  border: none;
+  color: var(--chubb-accent);
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Tables */
+.table-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.claims-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.claims-table th {
+  background-color: var(--chubb-light-bg);
+  padding: 0.75rem 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--chubb-text-muted);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--chubb-border);
+}
+
+.claims-table td {
+  padding: 1rem;
+  font-size: 0.85rem;
+  border-bottom: 1px solid var(--chubb-border);
+}
+
+.bold-cell {
+  font-weight: 600;
+  color: var(--chubb-blue);
+}
+
+.type-tag {
+  background: #f1f5f9;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Detail & Lifecycle Tracker */
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.lifecycle-tracker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  padding: 1.25rem 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--chubb-border);
+  margin-bottom: 1.5rem;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--chubb-text-muted);
+}
+
+.step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--chubb-border);
+  color: var(--chubb-text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.step.step-active .step-num {
+  background: var(--chubb-accent);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(0, 132, 204, 0.2);
+}
+
+.step.step-active .step-label {
+  color: var(--chubb-blue);
+  font-weight: 700;
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--chubb-border);
+  margin: 0 0.5rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.summary-field {
+  margin-bottom: 1rem;
+}
+
+.summary-field label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--chubb-text-muted);
+}
+
+.amount-val {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--chubb-blue);
+}
+
+.amount-val.approved {
+  color: var(--chubb-success);
+}
+
+.description-text {
+  background: var(--chubb-light-bg);
+  padding: 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.action-box {
+  background: var(--chubb-light-bg);
+  padding: 1.25rem;
+  border-radius: 6px;
+  margin-bottom: 1.25rem;
+}
+
+.terminal-box {
+  padding: 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.terminal-box.settled { background: #dcfce7; color: #166534; }
+.terminal-box.rejected { background: #fee2e2; color: #991b1b; }
+
+.history-container {
+  margin-top: 1.5rem;
+  border-top: 1px solid var(--chubb-border);
+  padding-top: 1.25rem;
+}
+
+.history-item {
+  border-left: 2px solid var(--chubb-accent);
+  padding-left: 0.75rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.hist-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.2rem;
+}
+
+.hist-badge {
+  font-weight: 700;
+  color: var(--chubb-blue);
+}
+
+.hist-time {
+  color: var(--chubb-text-muted);
+}
+
+.hist-by {
+  color: var(--chubb-text-muted);
+  font-size: 0.7rem;
+}
