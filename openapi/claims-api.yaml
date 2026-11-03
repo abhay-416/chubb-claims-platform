@@ -1,0 +1,590 @@
+openapi: 3.0.3
+info:
+  title: Chubb APAC Claims Management Platform API
+  description: |
+    Production-ready REST API for Chubb APAC Motor & Property Claims Processing.
+    Supports Claimant First Notice of Loss (FNOL), Claims Officer review & assessment workflows,
+    and Executive Manager real-time liability exposure metrics across 6 APAC markets.
+  version: 1.0.0
+  contact:
+    name: Chubb APAC Engineering
+    email: engineering@chubb.com
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Local Development Server
+
+paths:
+  /auth/login:
+    post:
+      summary: User authentication
+      description: Authenticates claimant, claims officer, or manager and returns JWT token
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+
+  /auth/me:
+    get:
+      summary: Current user profile
+      description: Returns profile and roles of authenticated user
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Authenticated user details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+
+  /claims:
+    post:
+      summary: Submit a new claim (FNOL)
+      description: Claimant submits a First Notice of Loss. Initial status is SUBMITTED.
+      operationId: submitClaim
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClaimRequest'
+      responses:
+        '201':
+          description: Claim submitted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResponse'
+        '400':
+          description: Invalid claim data
+
+    get:
+      summary: List and filter claims
+      description: Retrieves claims with optional filters by status, market, or assigned officer.
+      operationId: listClaims
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/ClaimStatus'
+        - name: market
+          in: query
+          schema:
+            $ref: '#/components/schemas/Market'
+        - name: type
+          in: query
+          schema:
+            $ref: '#/components/schemas/ClaimType'
+        - name: unassignedOnly
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of claims
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClaimResponse'
+
+  /claims/{id}:
+    get:
+      summary: Get claim details
+      description: Full details including audit history, documents, and additional info requests.
+      operationId: getClaimById
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Claim details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimDetailResponse'
+        '404':
+          description: Claim not found
+
+  /claims/{id}/assign:
+    post:
+      summary: Assign claim to officer
+      description: Assigns claim to a claims officer. Transition SUBMITTED -> ASSIGNED.
+      operationId: assignClaim
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignClaimRequest'
+      responses:
+        '200':
+          description: Claim assigned successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResponse'
+        '400':
+          description: Invalid state transition
+
+  /claims/{id}/review:
+    post:
+      summary: Start review
+      description: Moves claim into active investigation. Transition ASSIGNED -> UNDER_REVIEW.
+      operationId: startReview
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Review started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResponse'
+
+  /claims/{id}/request-info:
+    post:
+      summary: Request additional information from claimant
+      description: Requests documents or clarification. Transition UNDER_REVIEW -> ADDITIONAL_INFO_REQUIRED.
+      operationId: requestAdditionalInfo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequestInfoPayload'
+      responses:
+        '200':
+          description: Request recorded and notification dispatched
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResponse'
+
+  /claims/{id}/submit-info:
+    post:
+      summary: Provide requested information
+      description: Claimant submits requested details. Transition ADDITIONAL_INFO_REQUIRED -> UNDER_REVIEW.
+      operationId: submitAdditionalInfo
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProvideInfoPayload'
+      responses:
+        '200':
+          description: Information submitted and review resumed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResponse'
+
+  /claims/{id}/assess:
+    post:
+      summary: Assess claim (Approve or Reject)
+      description: Officer renders verdict. Transition UNDER_REVIEW -> APPROVED or REJECTED.
+      operationId: assessClaim
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssessClaimRequest'
+      responses:
+        '200':
+          description: Assessment finalized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResponse'
+
+  /claims/{id}/settle:
+    post:
+      summary: Settle approved claim
+      description: Finalizes financial disbursement. Transition APPROVED -> SETTLED.
+      operationId: settleClaim
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SettleClaimRequest'
+      responses:
+        '200':
+          description: Claim marked settled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ClaimResponse'
+
+  /dashboard/metrics:
+    get:
+      summary: Claims workload metrics
+      description: Aggregated KPI metrics for claims officers and managers.
+      operationId: getWorkloadMetrics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Metrics summary
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardMetricsResponse'
+
+  /dashboard/liability:
+    get:
+      summary: Outstanding liability exposure
+      description: Real-time liability exposure computed by market and claim type.
+      operationId: getLiabilityExposure
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Liability exposure data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LiabilityExposureResponse'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Market:
+      type: string
+      enum: [SINGAPORE, HONG_KONG, AUSTRALIA, THAILAND, MALAYSIA, INDONESIA]
+
+    ClaimType:
+      type: string
+      enum: [MOTOR, PROPERTY]
+
+    ClaimStatus:
+      type: string
+      enum:
+        - SUBMITTED
+        - ASSIGNED
+        - UNDER_REVIEW
+        - ADDITIONAL_INFO_REQUIRED
+        - APPROVED
+        - REJECTED
+        - SETTLED
+
+    UserRole:
+      type: string
+      enum: [CLAIMANT, CLAIMS_OFFICER, CLAIMS_MANAGER]
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          example: officer@chubb.com
+        password:
+          type: string
+          example: password123
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          $ref: '#/components/schemas/UserRole'
+        market:
+          $ref: '#/components/schemas/Market'
+
+    CreateClaimRequest:
+      type: object
+      required: [policyNumber, claimType, market, incidentDate, incidentDescription, estimatedAmount]
+      properties:
+        policyNumber:
+          type: string
+          example: POL-SG-MOTOR-9821
+        claimType:
+          $ref: '#/components/schemas/ClaimType'
+        market:
+          $ref: '#/components/schemas/Market'
+        incidentDate:
+          type: string
+          format: date
+          example: '2026-10-15'
+        incidentDescription:
+          type: string
+          example: Rear-end collision on Pan Island Expressway during heavy rain.
+        estimatedAmount:
+          type: number
+          format: double
+          example: 4500.00
+
+    ClaimResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        claimNumber:
+          type: string
+          example: CLM-SG-2026-1001
+        policyNumber:
+          type: string
+        claimType:
+          $ref: '#/components/schemas/ClaimType'
+        market:
+          $ref: '#/components/schemas/Market'
+        status:
+          $ref: '#/components/schemas/ClaimStatus'
+        incidentDate:
+          type: string
+          format: date
+        incidentDescription:
+          type: string
+        estimatedAmount:
+          type: number
+        approvedAmount:
+          type: number
+        claimantId:
+          type: integer
+          format: int64
+        claimantName:
+          type: string
+        assignedOfficerId:
+          type: integer
+          format: int64
+        assignedOfficerName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ClaimDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/ClaimResponse'
+        - type: object
+          properties:
+            history:
+              type: array
+              items:
+                $ref: '#/components/schemas/ClaimHistoryItem'
+            infoRequests:
+              type: array
+              items:
+                $ref: '#/components/schemas/ClaimInfoRequestItem'
+
+    ClaimHistoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        oldStatus:
+          $ref: '#/components/schemas/ClaimStatus'
+        newStatus:
+          $ref: '#/components/schemas/ClaimStatus'
+        changedBy:
+          type: string
+        notes:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    ClaimInfoRequestItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        requestedInfo:
+          type: string
+        requestedBy:
+          type: string
+        response:
+          type: string
+        respondedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [PENDING, RESOLVED]
+
+    AssignClaimRequest:
+      type: object
+      properties:
+        officerId:
+          type: integer
+          format: int64
+          description: Omit to self-assign to authenticated officer
+
+    RequestInfoPayload:
+      type: object
+      required: [requestedInfo]
+      properties:
+        requestedInfo:
+          type: string
+          example: Please provide the police incident report and repair shop estimate.
+
+    ProvideInfoPayload:
+      type: object
+      required: [response]
+      properties:
+        response:
+          type: string
+          example: Attached police report #PR-9921 and certified quote from ComfortDelGro workshop.
+
+    AssessClaimRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [APPROVE, REJECT]
+        approvedAmount:
+          type: number
+          format: double
+          example: 4200.00
+        notes:
+          type: string
+          example: Assessment complete. Liability verified under comprehensive motor policy.
+
+    SettleClaimRequest:
+      type: object
+      properties:
+        settlementNotes:
+          type: string
+          example: Fast payment disbursed via direct bank transfer.
+
+    DashboardMetricsResponse:
+      type: object
+      properties:
+        totalClaims:
+          type: integer
+        openClaims:
+          type: integer
+        settledClaims:
+          type: integer
+        rejectedClaims:
+          type: integer
+        averageSettlementDays:
+          type: number
+        statusBreakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        marketBreakdown:
+          type: object
+          additionalProperties:
+            type: integer
+
+    LiabilityExposureResponse:
+      type: object
+      properties:
+        totalOutstandingLiability:
+          type: number
+        marketExposure:
+          type: object
+          additionalProperties:
+            type: number
+        typeExposure:
+          type: object
+          additionalProperties:
+            type: number

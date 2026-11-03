@@ -1,0 +1,218 @@
+{
+  "info": {
+    "name": "Chubb APAC Claims API",
+    "_postman_id": "chubb-claims-collection-v1",
+    "description": "Postman API test suite for Chubb APAC Claims Platform. Includes sample requests for Auth, Claim FNOL, Status Lifecycle, Review, Assessment, Settlement, and Liability Metrics.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "claimId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication",
+      "item": [
+        {
+          "name": "Login - Claims Officer",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"officer@chubb.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Login - Claimant",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"claimant@gmail.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          }
+        },
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth", "me"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Claims Management",
+      "item": [
+        {
+          "name": "Submit Claim (FNOL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"policyNumber\": \"POL-SG-MOTOR-9821\",\n  \"claimType\": \"MOTOR\",\n  \"market\": \"SINGAPORE\",\n  \"incidentDate\": \"2026-10-20\",\n  \"incidentDescription\": \"Rear-ended by a lorry while waiting at traffic light on Orchard Road. Substantial bumper and boot damage.\",\n  \"estimatedAmount\": 5800.00\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/claims", "host": ["{{baseUrl}}"], "path": ["claims"] }
+          }
+        },
+        {
+          "name": "List All Claims",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/claims", "host": ["{{baseUrl}}"], "path": ["claims"] }
+          }
+        },
+        {
+          "name": "Filter Claims by Market & Status",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/claims?market=SINGAPORE&status=SUBMITTED",
+              "host": ["{{baseUrl}}"],
+              "path": ["claims"],
+              "query": [
+                { "key": "market", "value": "SINGAPORE" },
+                { "key": "status", "value": "SUBMITTED" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Claim Detail by ID",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/claims/{{claimId}}", "host": ["{{baseUrl}}"], "path": ["claims", "{{claimId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Claim Lifecycle Workflow",
+      "item": [
+        {
+          "name": "Assign Claim to Officer (SUBMITTED -> ASSIGNED)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/claims/{{claimId}}/assign", "host": ["{{baseUrl}}"], "path": ["claims", "{{claimId}}", "assign"] }
+          }
+        },
+        {
+          "name": "Start Review (ASSIGNED -> UNDER_REVIEW)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/claims/{{claimId}}/review", "host": ["{{baseUrl}}"], "path": ["claims", "{{claimId}}", "review"] }
+          }
+        },
+        {
+          "name": "Request Additional Info (UNDER_REVIEW -> ADDITIONAL_INFO_REQUIRED)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"requestedInfo\": \"Please submit authorized workshop repair invoice and dashcam video if available.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/claims/{{claimId}}/request-info", "host": ["{{baseUrl}}"], "path": ["claims", "{{claimId}}", "request-info"] }
+          }
+        },
+        {
+          "name": "Provide Additional Info (ADDITIONAL_INFO_REQUIRED -> UNDER_REVIEW)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"response\": \"Uploaded official quote #QU-88192 from Tan Chong Motor workshop. Estimated repair cost S$ 5,200.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/claims/{{claimId}}/submit-info", "host": ["{{baseUrl}}"], "path": ["claims", "{{claimId}}", "submit-info"] }
+          }
+        },
+        {
+          "name": "Assess Claim - Approve (UNDER_REVIEW -> APPROVED)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"decision\": \"APPROVE\",\n  \"approvedAmount\": 5200.00,\n  \"notes\": \"Direct liability confirmed. Deductible of S$ 600 applied. Approved payout S$ 5,200.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/claims/{{claimId}}/assess", "host": ["{{baseUrl}}"], "path": ["claims", "{{claimId}}", "assess"] }
+          }
+        },
+        {
+          "name": "Settle Claim (APPROVED -> SETTLED)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"settlementNotes\": \"Direct PayNow transfer completed to policyholder DBS account.\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/claims/{{claimId}}/settle", "host": ["{{baseUrl}}"], "path": ["claims", "{{claimId}}", "settle"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Manager Dashboards & Metrics",
+      "item": [
+        {
+          "name": "Workload & Claims Metrics",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/metrics", "host": ["{{baseUrl}}"], "path": ["dashboard", "metrics"] }
+          }
+        },
+        {
+          "name": "Outstanding Liability Exposure (Across 6 Markets)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/dashboard/liability", "host": ["{{baseUrl}}"], "path": ["dashboard", "liability"] }
+          }
+        }
+      ]
+    }
+  ]
+}
