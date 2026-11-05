@@ -1,5 +1,5 @@
 <div class="app-container">
-  <!-- Top Navigation Header with Chubb Branding and Global Role Switcher -->
+  <!-- Top Navigation Header -->
   <header class="app-header">
     <div class="header-left">
       <div class="chubb-logo">CHUBB</div>
@@ -9,230 +9,88 @@
       </div>
     </div>
 
-    <!-- Examiner Role Switcher -->
-    <div class="role-switcher">
-      <span class="switcher-label">TEST AS PERSONA:</span>
-      <button [class.active]="activeRole === 'CLAIMANT'" (click)="switchPersona('CLAIMANT')" class="btn-role">
-        👤 Claimant
+    <!-- Right Controls: Role Switcher & Demo Mode Toggle -->
+    <div class="header-right">
+      <!-- Explicit Demo Mode Switch (Addressing Reviewer Feedback) -->
+      <button class="btn-demo-toggle" [class.demo-on]="claimsService.isDemoMode" (click)="toggleDemoMode()">
+        {{ claimsService.isDemoMode ? '🟡 Mode: Offline Demo' : '🟢 Mode: Live API' }}
       </button>
-      <button [class.active]="activeRole === 'CLAIMS_OFFICER'" (click)="switchPersona('CLAIMS_OFFICER')" class="btn-role">
-        🛡️ Claims Officer
-      </button>
-      <button [class.active]="activeRole === 'CLAIMS_MANAGER'" (click)="switchPersona('CLAIMS_MANAGER')" class="btn-role">
-        📊 Manager
-      </button>
+
+      <div class="role-switcher">
+        <span class="switcher-label">TEST AS:</span>
+        <button [class.active]="activeRole === 'CLAIMANT'" (click)="switchPersona('CLAIMANT')" class="btn-role">
+          👤 Claimant
+        </button>
+        <button [class.active]="activeRole === 'CLAIMS_OFFICER'" (click)="switchPersona('CLAIMS_OFFICER')" class="btn-role">
+          🛡️ Officer
+        </button>
+        <button [class.active]="activeRole === 'CLAIMS_MANAGER'" (click)="switchPersona('CLAIMS_MANAGER')" class="btn-role">
+          📊 Manager
+        </button>
+      </div>
     </div>
   </header>
 
-  <!-- Sub-Header / Current User Profile Banner -->
+  <!-- Sub-Header / Current Context -->
   <div class="user-context-banner">
     <div class="context-user">
       <span class="pulse-dot"></span>
-      Signed in as: <strong>{{ currentUser.name }}</strong> ({{ currentUser.role }}) | Market: <strong>{{ formatMarket(currentUser.market) }}</strong>
+      Signed in as: <strong>{{ currentUser.name }}</strong> ({{ currentUser.role }}) | Market: <strong>{{ currentUser.market }}</strong>
     </div>
-    <div class="context-tabs">
-      <ng-container *ngIf="activeRole === 'CLAIMANT'">
-        <button [class.tab-active]="activeTab === 'my-claims'" (click)="activeTab = 'my-claims'">My Claims</button>
-        <button [class.tab-active]="activeTab === 'submit'" (click)="activeTab = 'submit'">+ Report Incident (FNOL)</button>
-      </ng-container>
-
-      <ng-container *ngIf="activeRole === 'CLAIMS_OFFICER'">
-        <button [class.tab-active]="activeTab === 'queue'" (click)="activeTab = 'queue'">Workload Queue</button>
-        <button *ngIf="selectedClaimDetail" [class.tab-active]="activeTab === 'detail'" (click)="activeTab = 'detail'">
-          Claim #{{ selectedClaimDetail.claim.claimNumber }}
-        </button>
-      </ng-container>
-
-      <ng-container *ngIf="activeRole === 'CLAIMS_MANAGER'">
-        <button [class.tab-active]="activeTab === 'manager'" (click)="activeTab = 'manager'">Liability Exposure (6 Markets)</button>
-        <button [class.tab-active]="activeTab === 'queue'" (click)="activeTab = 'queue'">All Claims Audit</button>
-      </ng-container>
+    <div class="context-right">
+      <span class="badge" [class.badge-approved]="!claimsService.isDemoMode" [class.badge-assigned]="claimsService.isDemoMode">
+        {{ claimsService.isDemoMode ? 'OFFLINE FIXTURE MODE' : 'LIVE BACKEND CONNECTED' }}
+      </span>
     </div>
   </div>
 
-  <!-- Global Action Notification Toast -->
+  <!-- Banners for Feedback and Explicit Error Messages -->
+  <div *ngIf="claimsService.isDemoMode" class="demo-notice-bar">
+    ⚠️ <strong>Demo Mode Active:</strong> Operating against local sample fixtures. Click 'Mode: Offline Demo' in the top right to switch to Live Backend REST API.
+  </div>
+
+  <div *ngIf="errorMessage" class="error-banner">
+    <span>❌ {{ errorMessage }}</span>
+    <button (click)="errorMessage = ''" class="btn-close">&times;</button>
+  </div>
+
   <div *ngIf="actionFeedback" class="feedback-banner">
     <span>ℹ️ {{ actionFeedback }}</span>
     <button (click)="actionFeedback = ''" class="btn-close">&times;</button>
   </div>
 
-  <!-- Main View Area -->
+  <!-- Main View Router / Delegator -->
   <main class="main-content">
+    <ng-container *ngIf="activeTab === 'main'">
+      <!-- Claimant Feature View -->
+      <app-claimant-view
+        *ngIf="activeRole === 'CLAIMANT'"
+        [claims]="claims"
+        (claimSubmitted)="onClaimSubmitted($event)"
+        (selectClaim)="viewClaimDetail($event)">
+      </app-claimant-view>
 
-    <!-- 1. MANAGER VIEW: Outstanding Liability Exposure Across 6 APAC Markets -->
-    <section *ngIf="activeTab === 'manager'" class="manager-section">
-      <div class="section-title">
-        <h2>Executive Dashboard: Real-time Liability Exposure</h2>
-        <p>Continuous liability risk calculation across 6 APAC markets (Motor & Property portfolios)</p>
-      </div>
+      <!-- Officer Feature View -->
+      <app-officer-view
+        *ngIf="activeRole === 'CLAIMS_OFFICER'"
+        [claims]="claims"
+        (selectClaim)="viewClaimDetail($event)"
+        (filterChanged)="loadDashboardData($event)">
+      </app-officer-view>
 
-      <div class="kpi-grid">
-        <div class="kpi-card highlight">
-          <span class="kpi-label">Total Outstanding Liability Exposure</span>
-          <span class="kpi-value">${{ (liability?.totalOutstandingLiability || 0) | number:'1.2-2' }}</span>
-          <span class="kpi-sub">Sum of all open estimated & approved claims</span>
-        </div>
-        <div class="kpi-card">
-          <span class="kpi-label">Open Active Claims</span>
-          <span class="kpi-value">{{ metrics?.openClaims || 0 }}</span>
-          <span class="kpi-sub">Requiring assessment / payout</span>
-        </div>
-        <div class="kpi-card">
-          <span class="kpi-label">Settled Claims</span>
-          <span class="kpi-value">{{ metrics?.settledClaims || 0 }}</span>
-          <span class="kpi-sub">Financial disbursement completed</span>
-        </div>
-        <div class="kpi-card">
-          <span class="kpi-label">Total Volume</span>
-          <span class="kpi-value">{{ metrics?.totalClaims || 0 }}</span>
-          <span class="kpi-sub">All 6 regional jurisdictions</span>
-        </div>
-      </div>
+      <!-- Manager Feature View -->
+      <app-manager-view
+        *ngIf="activeRole === 'CLAIMS_MANAGER'"
+        [metrics]="metrics"
+        [liability]="liability">
+      </app-manager-view>
+    </ng-container>
 
-      <!-- 6 APAC Markets Liability Grid -->
-      <div class="market-liability-card">
-        <h3>Outstanding Liability by Market Jurisdiction</h3>
-        <div class="market-grid">
-          <div class="market-box" *ngFor="let m of ['SINGAPORE', 'HONG_KONG', 'AUSTRALIA', 'THAILAND', 'MALAYSIA', 'INDONESIA']">
-            <div class="market-header">{{ formatMarket(m) }}</div>
-            <div class="market-amount">${{ (liability?.marketExposure?.[m] || 0) | number:'1.2-2' }}</div>
-            <div class="market-count">{{ metrics?.marketBreakdown?.[m] || 0 }} total claims</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 2. CLAIMANT VIEW: Report New Incident (FNOL) -->
-    <section *ngIf="activeTab === 'submit'" class="form-section">
-      <div class="card form-card">
-        <h2>Submit First Notice of Loss (FNOL)</h2>
-        <p class="subtitle">File a motor or property insurance claim across Chubb APAC markets</p>
-
-        <form (ngSubmit)="submitNewClaim()">
-          <div class="form-row">
-            <div class="form-group">
-              <label>Policy Number *</label>
-              <input type="text" [(ngModel)]="newClaim.policyNumber" name="policyNumber" placeholder="e.g. POL-SG-MOT-9821" required>
-            </div>
-            <div class="form-group">
-              <label>Claim Portfolio Type *</label>
-              <select [(ngModel)]="newClaim.claimType" name="claimType">
-                <option value="MOTOR">Motor Insurance</option>
-                <option value="PROPERTY">Property & Casualty</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Market Jurisdiction *</label>
-              <select [(ngModel)]="newClaim.market" name="market">
-                <option value="SINGAPORE">Singapore</option>
-                <option value="HONG_KONG">Hong Kong</option>
-                <option value="AUSTRALIA">Australia</option>
-                <option value="THAILAND">Thailand</option>
-                <option value="MALAYSIA">Malaysia</option>
-                <option value="INDONESIA">Indonesia</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Incident Date *</label>
-              <input type="date" [(ngModel)]="newClaim.incidentDate" name="incidentDate" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Estimated Loss Amount ($) *</label>
-            <input type="number" step="0.01" [(ngModel)]="newClaim.estimatedAmount" name="estimatedAmount" required>
-          </div>
-
-          <div class="form-group">
-            <label>Incident Description & Circumstances *</label>
-            <textarea rows="4" [(ngModel)]="newClaim.incidentDescription" name="incidentDescription"
-                      placeholder="Describe what occurred, third party details, weather/road conditions, and observed physical damages..." required></textarea>
-          </div>
-
-          <div class="form-actions">
-            <button type="button" class="btn-secondary" (click)="activeTab = 'my-claims'">Cancel</button>
-            <button type="submit" class="btn-primary">Submit First Notice of Loss</button>
-          </div>
-        </form>
-      </div>
-    </section>
-
-    <!-- 3. CLAIMS LIST VIEW (Used by Claimant and Officers) -->
-    <section *ngIf="activeTab === 'queue' || activeTab === 'my-claims'" class="table-section">
-      <div class="table-header-bar">
-        <h2>{{ activeRole === 'CLAIMANT' ? 'My Insurance Claims' : 'Chubb Incoming Claims Workload Queue' }}</h2>
-
-        <div class="filter-controls" *ngIf="activeRole !== 'CLAIMANT'">
-          <select [(ngModel)]="filterMarket" (change)="loadDashboardData()">
-            <option value="">All APAC Markets</option>
-            <option value="SINGAPORE">Singapore</option>
-            <option value="HONG_KONG">Hong Kong</option>
-            <option value="AUSTRALIA">Australia</option>
-            <option value="THAILAND">Thailand</option>
-            <option value="MALAYSIA">Malaysia</option>
-            <option value="INDONESIA">Indonesia</option>
-          </select>
-
-          <select [(ngModel)]="filterStatus" (change)="loadDashboardData()">
-            <option value="">All Statuses</option>
-            <option value="SUBMITTED">Submitted</option>
-            <option value="ASSIGNED">Assigned</option>
-            <option value="UNDER_REVIEW">Under Review</option>
-            <option value="ADDITIONAL_INFO_REQUIRED">Info Required</option>
-            <option value="APPROVED">Approved</option>
-            <option value="REJECTED">Rejected</option>
-            <option value="SETTLED">Settled</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="card table-card">
-        <table class="claims-table">
-          <thead>
-            <tr>
-              <th>Claim Number</th>
-              <th>Policy #</th>
-              <th>Type</th>
-              <th>Market</th>
-              <th>Estimated Loss</th>
-              <th>Approved Payout</th>
-              <th>Status</th>
-              <th>Assigned Officer</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let c of claims">
-              <td class="bold-cell">{{ c.claimNumber }}</td>
-              <td>{{ c.policyNumber }}</td>
-              <td><span class="type-tag">{{ c.claimType }}</span></td>
-              <td>{{ formatMarket(c.market) }}</td>
-              <td>${{ c.estimatedAmount | number:'1.2-2' }}</td>
-              <td>{{ c.approvedAmount ? ('$' + (c.approvedAmount | number:'1.2-2')) : '-' }}</td>
-              <td>
-                <span class="badge" [ngClass]="'badge-' + c.status.toLowerCase()">{{ c.status.replace('_', ' ') }}</span>
-              </td>
-              <td>{{ c.assignedOfficerName || 'Unassigned' }}</td>
-              <td>
-                <button class="btn-inspect" (click)="viewClaimDetail(c.id)">Inspect & Review</button>
-              </td>
-            </tr>
-            <tr *ngIf="claims.length === 0">
-              <td colspan="9" class="empty-state">No claims found matching current criteria.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- 4. CLAIM DETAIL & ASSESSMENT WORKFLOW -->
+    <!-- Claim Detail & Assessment Lifecycle View -->
     <section *ngIf="activeTab === 'detail' && selectedClaimDetail" class="detail-section">
       <div class="detail-header">
         <div>
-          <button class="btn-back" (click)="activeTab = (activeRole === 'CLAIMANT' ? 'my-claims' : 'queue')">&larr; Back to List</button>
+          <button class="btn-back" (click)="activeTab = 'main'">&larr; Back to Dashboard</button>
           <h2>Claim #{{ selectedClaimDetail.claim.claimNumber }}</h2>
         </div>
         <div>
@@ -242,7 +100,7 @@
         </div>
       </div>
 
-      <!-- Lifecycle Progression Visualizer -->
+      <!-- State Machine Progression Tracker -->
       <div class="lifecycle-tracker">
         <div class="step" [class.step-active]="selectedClaimDetail.claim.status === 'SUBMITTED'">
           <span class="step-num">1</span>
@@ -276,7 +134,7 @@
       </div>
 
       <div class="detail-grid">
-        <!-- Claim Summary Column -->
+        <!-- Summary Card -->
         <div class="card detail-summary-card">
           <h3>Incident & Policy Metadata</h3>
           <div class="summary-field">
@@ -284,8 +142,8 @@
             <div>{{ selectedClaimDetail.claim.policyNumber }} ({{ selectedClaimDetail.claim.claimType }})</div>
           </div>
           <div class="summary-field">
-            <label>Market Jurisdiction</label>
-            <div>{{ formatMarket(selectedClaimDetail.claim.market) }}</div>
+            <label>Market & Currency</label>
+            <div>{{ selectedClaimDetail.claim.market }} — <strong>{{ selectedClaimDetail.claim.currency }}</strong></div>
           </div>
           <div class="summary-field">
             <label>Claimant Policyholder</label>
@@ -296,12 +154,12 @@
             <div>{{ selectedClaimDetail.claim.incidentDate }}</div>
           </div>
           <div class="summary-field">
-            <label>Estimated Damage Loss</label>
-            <div class="amount-val">${{ selectedClaimDetail.claim.estimatedAmount | number:'1.2-2' }}</div>
+            <label>Estimated Loss Amount</label>
+            <div class="amount-val">{{ selectedClaimDetail.claim.currency }} {{ selectedClaimDetail.claim.estimatedAmount | number:'1.2-2' }}</div>
           </div>
           <div class="summary-field" *ngIf="selectedClaimDetail.claim.approvedAmount">
-            <label>Approved Settlement</label>
-            <div class="amount-val approved">${{ selectedClaimDetail.claim.approvedAmount | number:'1.2-2' }}</div>
+            <label>Approved Settlement Payout</label>
+            <div class="amount-val approved">{{ selectedClaimDetail.claim.currency }} {{ selectedClaimDetail.claim.approvedAmount | number:'1.2-2' }}</div>
           </div>
           <div class="summary-field">
             <label>Damage Description</label>
@@ -309,11 +167,11 @@
           </div>
         </div>
 
-        <!-- Workflow Action Panel -->
+        <!-- Action Panel -->
         <div class="card action-card">
           <h3>State Machine Actions</h3>
 
-          <!-- Officer Actions -->
+          <!-- Staff Actions -->
           <ng-container *ngIf="activeRole !== 'CLAIMANT'">
             <!-- Step 1: Assign to Me -->
             <div *ngIf="selectedClaimDetail.claim.status === 'SUBMITTED'" class="action-box">
@@ -325,7 +183,7 @@
 
             <!-- Step 2: Start Review -->
             <div *ngIf="selectedClaimDetail.claim.status === 'ASSIGNED'" class="action-box">
-              <p>Claim assigned. Ready to commence investigation and policy coverage check.</p>
+              <p>Claim assigned. Ready to commence investigation and damage verification.</p>
               <button class="btn-primary" (click)="startReview(selectedClaimDetail.claim.id)">
                 Commence Damage Assessment (UNDER_REVIEW)
               </button>
@@ -335,7 +193,7 @@
             <div *ngIf="selectedClaimDetail.claim.status === 'UNDER_REVIEW'" class="assessment-controls">
               <div class="sub-action">
                 <h4>Request Additional Information</h4>
-                <input type="text" [(ngModel)]="infoRequestText" placeholder="e.g. Workshop quote, repair bill, dashcam footage...">
+                <input type="text" [(ngModel)]="infoRequestText" placeholder="e.g. Police accident report, certified repair estimate...">
                 <button class="btn-warning" (click)="sendInfoRequest(selectedClaimDetail.claim.id)">
                   Request from Claimant
                 </button>
@@ -344,7 +202,7 @@
               <div class="sub-action divider">
                 <h4>Render Assessment Decision</h4>
                 <div class="form-group">
-                  <label>Approved Payout Amount ($)</label>
+                  <label>Approved Payout Amount ({{ selectedClaimDetail.claim.currency }})</label>
                   <input type="number" [(ngModel)]="approvalAmount">
                 </div>
                 <div class="form-group">
@@ -364,14 +222,13 @@
 
             <!-- Step 4: Settle Claim -->
             <div *ngIf="selectedClaimDetail.claim.status === 'APPROVED'" class="action-box">
-              <p>Claim has been approved for <strong>${{ selectedClaimDetail.claim.approvedAmount | number:'1.2-2' }}</strong>.</p>
-              <input type="text" [(ngModel)]="settlementNotes" placeholder="Disbursement reference / payment notes...">
+              <p>Claim has been approved for <strong>{{ selectedClaimDetail.claim.currency }} {{ selectedClaimDetail.claim.approvedAmount | number:'1.2-2' }}</strong>.</p>
+              <input type="text" [(ngModel)]="settlementNotes" placeholder="Bank disbursement reference...">
               <button class="btn-success" (click)="settleClaim(selectedClaimDetail.claim.id)">
                 Execute Financial Settlement (SETTLED)
               </button>
             </div>
 
-            <!-- Terminal States -->
             <div *ngIf="selectedClaimDetail.claim.status === 'SETTLED'" class="terminal-box settled">
               ✅ Financial settlement finalized. Claim lifecycle concluded.
             </div>
@@ -395,7 +252,7 @@
 
             <div *ngIf="selectedClaimDetail.claim.status !== 'ADDITIONAL_INFO_REQUIRED'" class="claimant-status-info">
               <p>Your claim is currently in <strong>{{ selectedClaimDetail.claim.status.replace('_', ' ') }}</strong> status.</p>
-              <p class="sub">Chubb APAC claims handlers are actively working on your case. Updates will appear in real time.</p>
+              <p class="sub">Chubb APAC claims handlers are actively processing your case.</p>
             </div>
           </ng-container>
 
@@ -417,6 +274,5 @@
         </div>
       </div>
     </section>
-
   </main>
 </div>

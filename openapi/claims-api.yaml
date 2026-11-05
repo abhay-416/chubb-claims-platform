@@ -401,6 +401,10 @@ components:
           $ref: '#/components/schemas/ClaimType'
         market:
           $ref: '#/components/schemas/Market'
+        currency:
+          type: string
+          example: SGD
+          description: Statutory currency code for the market (e.g. SGD, HKD, AUD, THB, MYR, IDR)
         incidentDate:
           type: string
           format: date
@@ -428,6 +432,9 @@ components:
           $ref: '#/components/schemas/ClaimType'
         market:
           $ref: '#/components/schemas/Market'
+        currency:
+          type: string
+          example: SGD
         status:
           $ref: '#/components/schemas/ClaimStatus'
         incidentDate:
@@ -449,6 +456,10 @@ components:
           format: int64
         assignedOfficerName:
           type: string
+        version:
+          type: integer
+          format: int64
+          example: 0
         createdAt:
           type: string
           format: date-time

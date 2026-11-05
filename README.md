@@ -1,6 +1,6 @@
 # Chubb APAC Claims Management Platform
 
-[![Java 17+](https://img.shields.io/badge/Java-17%2B-orange.svg)](https://adoptium.net)
+[![Java 21](https://img.shields.io/badge/Java-21-orange.svg)](https://adoptium.net)
 [![Spring Boot 3.2](https://img.shields.io/badge/Spring%20Boot-3.2-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Angular 17+](https://img.shields.io/badge/Angular-17%2B-red.svg)](https://angular.dev)
 [![Docker Compose](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://www.docker.com)
@@ -35,17 +35,17 @@ This platform unifies the entire claims lifecycle in a single platform:
 
 ## Architecture & System Design
 
-### Modular Monolith Blueprint
-The backend is structured as a **Modular Monolith** using Spring Boot 3, enforcing strict physical and logical boundaries:
+### Feature-Oriented Modular Monolith Blueprint
+The backend is structured as a **Feature-Oriented Modular Monolith** using Spring Boot 3.2.5 and Java 21, enforcing strict domain boundaries:
 
 ```
 src/main/java/com/chubb/claims/
-├── api/             # REST Controllers, DTOs, Bean Validation, Global Exception Handling
-├── domain/          # Entities, Enums, Claim State Machine Validator
-├── service/         # Core Workflows, Liability Calculation, Security Services
-├── infrastructure/  # JPA Repositories, Event Publishers (Spring / Kafka)
-├── security/        # Stateless JWT Authentication & RBAC Filters
-└── config/          # OpenAPI/Swagger & Data Initializers
+├── auth/          # Identity, JWT issuance, User entity, Login/Profile APIs
+├── claim/         # Claims lifecycle, FNOL, 7-step state machine, assessment
+├── dashboard/     # Statutory multi-currency liability calculation & KPIs
+├── notification/  # In-process Spring events & Apache Kafka publishers
+├── security/      # Stateless JWT filters, Spring Security 6 RBAC
+└── shared/        # OpenAPI config, demo data initializer, GlobalExceptionHandler
 ```
 
 ### Claim Lifecycle State Machine
@@ -140,10 +140,11 @@ mvn test
 ```
 
 ### Covered Test Scenarios
-- ✅ **ClaimStateMachineTest:** Validates all allowed transitions; rigorously asserts that illegal transitions (e.g. `SUBMITTED -> SETTLED`) throw `InvalidStateTransitionException`.
+- ✅ **ClaimStateMachineTest:** Validates all 7 allowed transitions; rigorously asserts that illegal jumps (e.g. `SUBMITTED -> SETTLED`) throw `InvalidStateTransitionException`.
 - ✅ **ClaimServiceTest:** Verifies FNOL creation, claim assignment, approved amount validation, and event emission.
-- ✅ **DashboardServiceTest:** Verifies the actuarial liability exposure calculation across all 6 APAC jurisdictions.
-- ✅ **ClaimControllerIntegrationTest:** MockMvc test checking HTTP status codes, validation errors (`400 Bad Request`), and JWT security authorization.
+- ✅ **DashboardServiceTest:** Verifies statutory currency liability exposure calculation across all 6 APAC jurisdictions.
+- ✅ **ClaimConcurrencyAndSecurityTest:** Verifies optimistic locking (`@Version`) race conditions, cross-tenant claimant data isolation, and officer jurisdiction enforcement.
+- ✅ **ClaimControllerIntegrationTest:** MockMvc integration test validating HTTP status codes, validation constraints (`400 Bad Request`), and JWT security authorization.
 
 ---
 
@@ -155,7 +156,7 @@ Use the **Global Role Switcher** at the top of the Angular application or log in
 | :--- | :--- | :--- | :--- | :--- |
 | **Claimant** | Tan Wei Ling | `claimant.sg@gmail.com` | Singapore | Submit FNOL, Track claim timeline, Submit requested documents |
 | **Claims Officer** | Sarah Jenkins | `officer@chubb.com` | Singapore | Workload Queue, Assign to self, Review, Request info, Assess, Settle |
-| **Claims Manager** | Marcus Vance | `manager@chubb.com` | Singapore | 6-Market Real-Time Liability Dashboard, Executive Workload KPIs |
+| **Claims Manager** | Marcus Vance | `manager@chubb.com` | Singapore | 6-Market Statutory Currency Liability Dashboard, Workload KPIs |
 
 ---
 
@@ -166,29 +167,35 @@ chubb-claims-platform/
 ├── README.md                      # Comprehensive developer guide & system architecture
 ├── NOTES.md                       # Technical decisions, assumptions & trade-off analysis
 ├── AI_WORKING_JOURNAL.md          # Candidate AI interaction journal (as requested by Chubb)
+├── .env.example                   # Environment variable template
 ├── docker-compose.yml             # Single-command local environment setup
 ├── .gitignore                     # Professional git exclusions
 │
 ├── backend/
 │   ├── src/main/java/com/chubb/claims/
-│   │   ├── api/                   # REST Controllers, DTOs, GlobalExceptionHandler
-│   │   ├── domain/                # Entities, Enums, ClaimStateMachine validator
-│   │   ├── service/               # Claim workflows, Liability Exposure calculation
-│   │   ├── infrastructure/        # JPA Repositories, Kafka/Spring event publishers
-│   │   ├── security/              # Stateless Spring Security 6 + JWT filter
-│   │   └── config/                # OpenAPI Swagger configuration & Demo Data Initializer
+│   │   ├── auth/                  # Identity, JWT issuance, User entity, Login/Profile APIs
+│   │   ├── claim/                 # Claims lifecycle, FNOL, 7-step state machine, assessment
+│   │   ├── dashboard/             # Statutory multi-currency liability calculation & KPIs
+│   │   ├── notification/          # In-process Spring events & Apache Kafka publishers
+│   │   ├── security/              # Stateless JWT filters, Spring Security 6 RBAC
+│   │   └── shared/                # OpenAPI config, demo data initializer, GlobalExceptionHandler
 │   ├── src/main/resources/
 │   │   ├── application.yml        # Dual profile: dev (H2) & docker (PostgreSQL + Kafka)
 │   │   └── db/migration/          # Initial SQL schema DDL & seed data
 │   ├── src/test/java/com/chubb/claims/ # Automated JUnit 5 & MockMvc test suite
-│   ├── Dockerfile
-│   └── pom.xml
+│   ├── Dockerfile                 # Java 21 multi-stage build
+│   └── pom.xml                    # Spring Boot 3.2.5 + Java 21
 │
 ├── frontend/
 │   ├── src/app/
-│   │   ├── shared/                # Claims API client service & interfaces
-│   │   ├── app.component.ts       # Global Persona Switcher & controller
-│   │   ├── app.component.html     # Claimant, Officer & Manager view templates
+│   │   ├── core/models/           # Claim, MarketLiability TypeScript interfaces
+│   │   ├── features/
+│   │   │   ├── claimant/          # FNOL form, active claims list, visual progress tracker
+│   │   │   ├── officer/           # Workload queue, market/status filters, assessment modal
+│   │   │   └── manager/           # 6 APAC markets statutory currency liability dashboard
+│   │   ├── shared/services/       # Claims API client with explicit Demo Mode toggle
+│   │   ├── app.component.ts       # Global persona switcher & layout controller
+│   │   ├── app.component.html     # App shell delegating to feature components
 │   │   └── app.component.css      # Chubb APAC enterprise theme styling
 │   ├── Dockerfile
 │   └── package.json
@@ -199,24 +206,28 @@ chubb-claims-platform/
 ├── postman/
 │   └── chubb-claims.postman_collection.json # Complete Postman test collection
 │
-├── prompts/                       # LLM Prompt history log (Examiner requirement)
+├── prompts/                       # LLM Prompt history log (10 prompts)
 │   ├── 01-architecture-and-domain.md
 │   ├── 02-database-design-and-lifecycle.md
 │   ├── 03-api-contract-and-openapi.md
 │   ├── 04-backend-implementation.md
 │   ├── 05-security-and-jwt.md
-│   ├── 06-kafka-and-event-driven.md
+│   ├── 06-kafka-and-event-processing.md
 │   ├── 07-automated-testing.md
-│   └── 08-angular-frontend.md
+│   ├── 08-angular-implementation.md
+│   ├── 09-docker-and-local-setup.md
+│   └── 10-final-review.md
 │
 └── docs/
     ├── ARCHITECTURE.md            # C4 component & sequence diagrams
-    └── WALKTHROUGH.md             # 15-20 min hiring panel presentation & defense guide
+    ├── WALKTHROUGH.md             # 15-20 min hiring panel presentation & defense guide
+    ├── ER_DIAGRAM.md              # Complete relational entity relationship documentation
+    └── DESIGN_DECISIONS.md        # Formal Architecture Decision Records (ADR 01-06)
 ```
 
 ---
 
 ## AI Working Journal & Prompt Log
 As explicitly requested by Chubb APAC Engineering:
-- Detailed records of prompts, accepted recommendations, challenges, and overrides are documented in [AI_WORKING_JOURNAL.md](file:///d:/learning-with-antigravity/HCL_Assesments/chubb-claims-platform/AI_WORKING_JOURNAL.md) and `.claude/ai-journal.md`.
+- Detailed records of prompts, accepted recommendations, challenges, and overrides are documented in [AI_WORKING_JOURNAL.md](file:///d:/learning-with-antigravity/HCL_Assesments/chubb-claims-platform/AI_WORKING_JOURNAL.md), `.claude/ai-journal.md`, and `.antigravity/ai-journal.md`.
 - Individual stage prompts are tracked in [`prompts/`](file:///d:/learning-with-antigravity/HCL_Assesments/chubb-claims-platform/prompts).

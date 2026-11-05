@@ -59,3 +59,40 @@
 - **What I asked AI:** How to serve both Claimants and Claims Staff from a single Angular codebase.
 - **What AI proposed:** Separate login pages and complex route guards requiring manual user credential entry.
 - **What I challenged & overrode:** Added an interactive **Global Persona Switcher** in the top navigation bar with pre-configured Chubb APAC credentials. This allows examiners to seamlessly switch between Claimant, Claims Officer, and Claims Manager in one click without friction.
+
+---
+
+### Sprint Entry 7: Feature-Oriented Package Refactoring
+- **What I asked AI:** Review backend structure for maintainability and DDD compliance.
+- **What AI proposed:** Standard technical layer packaging (`controllers/`, `services/`, `repositories/`, `models/`).
+- **What I challenged & overrode:** Overrode to a **Feature-Oriented Package Layout**:
+  - `auth/`: Identity, users, login and token issuance
+  - `claim/`: Domain entities, 7-step state machine, FNOL, assessment, review
+  - `dashboard/`: Financial reserves and KPI aggregations
+  - `notification/`: Dual-mode domain events and Kafka producers
+  - `security/` & `shared/`: Infrastructure and cross-cutting concerns
+- **Reasoning:** Packaging by feature groups cohesive business rules together, minimizes cross-package contamination, and makes extracting bounded contexts into independent services in the future trivial.
+
+---
+
+### Sprint Entry 8: Multi-Currency Statutory Reserve Calculation
+- **What I asked AI:** Calculate regional liability across the 6 APAC markets.
+- **What AI proposed:** Summing amounts across all markets into a single currency number.
+- **What I challenged & overrode:** Strictly rejected naive cross-currency summing. In insurance regulations, SGD, HKD, AUD, THB, MYR, and IDR cannot be added together without active spot FX conversion.
+- **Implementation:** Structured `DashboardService` to group outstanding liabilities by `(market, currency)` and report statutory reserves per jurisdiction with proper currency formatting.
+
+---
+
+### Sprint Entry 9: Optimistic Concurrency & Multi-Officer Race Conditions
+- **What I asked AI:** Prevent multiple adjusters from claiming the same incoming loss concurrently.
+- **What AI proposed:** Heavy pessimistic row locks (`SELECT FOR UPDATE`).
+- **What I challenged & overrode:** Chose JPA Optimistic Concurrency Control using `@Version` on the `Claim` entity.
+- **Reasoning:** Optimistic locking provides non-blocking high-throughput reads across workload queues. When two adjusters attempt to take ownership of the same record simultaneously, Hibernate enforces version matching and cleanly fails the second adjuster with a `409 Conflict (OptimisticLockException)` without locking database tables.
+
+---
+
+### Sprint Entry 10: Explicit Frontend Demo Mode Toggle
+- **What I asked AI:** Handle frontend network failure states when backend is stopped.
+- **What AI proposed:** Silent `catchError` fallback returning hardcoded mock arrays.
+- **What I challenged & overrode:** Strictly prohibited silent fallbacks. Silent fallbacks deceive examiners into thinking the live backend is functioning when it is failing.
+- **Implementation:** Built an explicit **Demo Mode Toggle** in `ClaimsService` with visual status indicators in the header, giving examiners full control and transparency.

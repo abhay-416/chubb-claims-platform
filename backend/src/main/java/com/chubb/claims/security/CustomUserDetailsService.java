@@ -1,7 +1,7 @@
 package com.chubb.claims.security;
 
-import com.chubb.claims.domain.User;
-import com.chubb.claims.infrastructure.UserRepository;
+import com.chubb.claims.auth.domain.User;
+import com.chubb.claims.auth.infrastructure.UserRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
