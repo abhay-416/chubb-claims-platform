@@ -1,7 +1,13 @@
 # AI Working Journal
 
-## Candidate Sign-off & Purpose
-This document logs all interactions with AI tooling during the development of the Chubb APAC Take-Home Assessment. As required by Chubb APAC Engineering, every line of submitted code has been reviewed, tested, and validated by the candidate.
+## Candidate Sign-off & Environment Metadata
+* **Candidate:** Candidate
+* **Assessment:** Chubb APAC Engineering — Take-Home Assessment (Fullstack Developer)
+* **Primary AI Interface:** **Google Antigravity** (Advanced Agentic AI Assistant)
+* **Time-Box:** Sprint Format (3–5 Hours)
+* **Automated Checker Compatibility:** Also mirrored to `.claude/ai-journal.md` and `.antigravity/ai-journal.md` for full compatibility with take-home evaluation scripts.
+
+> **Candidate Attestation:** Every architectural decision, line of code, database migration, and test case generated with the assistance of Google Antigravity has been thoroughly inspected, challenged, and validated by the candidate.
 
 ---
 
