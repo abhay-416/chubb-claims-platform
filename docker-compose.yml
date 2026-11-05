@@ -3,6 +3,7 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: chubb-postgres
+    hostname: postgres
     environment:
       POSTGRES_DB: chubb_claims
       POSTGRES_USER: chubb_admin
@@ -11,17 +12,23 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backend/src/main/resources/db/migration/V1__init_schema_and_seed.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U chubb_admin -d chubb_claims"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      interval: 3s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+    networks:
+      chubb-network:
+        aliases:
+          - postgres
+          - chubb-postgres
 
   # 2. Apache Kafka Broker (KRaft Mode - No Zookeeper needed)
   kafka:
     image: confluentinc/cp-kafka:7.6.0
     container_name: chubb-kafka
+    hostname: kafka
     ports:
       - "9092:9092"
     environment:
@@ -39,6 +46,11 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: 'CONTROLLER'
       KAFKA_LOG_DIRS: '/tmp/kraft-combined-logs'
       CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    networks:
+      chubb-network:
+        aliases:
+          - kafka
+          - chubb-kafka
 
   # 3. Spring Boot Backend Application
   backend:
@@ -46,6 +58,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: chubb-backend
+    hostname: backend
     environment:
       SPRING_PROFILES_ACTIVE: docker
       DB_HOST: postgres
@@ -61,6 +74,11 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
+    networks:
+      chubb-network:
+        aliases:
+          - backend
+          - chubb-backend
 
   # 4. Angular Single Page Application
   frontend:
@@ -68,10 +86,20 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: chubb-frontend
+    hostname: frontend
     ports:
       - "4200:80"
     depends_on:
       - backend
+    networks:
+      chubb-network:
+        aliases:
+          - frontend
+          - chubb-frontend
 
 volumes:
   postgres_data:
+
+networks:
+  chubb-network:
+    driver: bridge
