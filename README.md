@@ -229,5 +229,5 @@ chubb-claims-platform/
 
 ## AI Working Journal & Prompt Log
 As explicitly requested by Chubb APAC Engineering:
-- Detailed records of prompts, accepted recommendations, challenges, and overrides are documented in [AI_WORKING_JOURNAL.md](AI_WORKING_JOURNAL.md) and [.claude/ai-journal.md](.claude/ai-journal.md).
+- Detailed records of prompts, accepted recommendations, challenges, and overrides are documented in [AI_WORKING_JOURNAL.md](AI_WORKING_JOURNAL.md) and [.antigravity/ai-journal.md](.antigravity/ai-journal.md).
 - Individual stage prompts are tracked in [`prompts/`](prompts/).
