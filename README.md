@@ -229,5 +229,5 @@ chubb-claims-platform/
 
 ## AI Working Journal & Prompt Log
 As explicitly requested by Chubb APAC Engineering:
-- Detailed records of prompts, accepted recommendations, challenges, and overrides are documented in [AI_WORKING_JOURNAL.md](file:///d:/learning-with-antigravity/HCL_Assesments/chubb-claims-platform/AI_WORKING_JOURNAL.md), `.claude/ai-journal.md`, and `.antigravity/ai-journal.md`.
-- Individual stage prompts are tracked in [`prompts/`](file:///d:/learning-with-antigravity/HCL_Assesments/chubb-claims-platform/prompts).
+- Detailed records of prompts, accepted recommendations, challenges, and overrides are documented in [AI_WORKING_JOURNAL.md](AI_WORKING_JOURNAL.md) and [.claude/ai-journal.md](.claude/ai-journal.md).
+- Individual stage prompts are tracked in [`prompts/`](prompts/).
